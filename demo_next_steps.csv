@@ -1,0 +1,7 @@
+Step,Owner,When,Output
+"Log into Cloudia Competition and check for corrigendum or deadline extension on notice 2026-045682","Bid Manager","Today — 28 April 2026","Confirmed go/no-go decision on current notice; Hilma alert set if no extension found"
+"Download full procurement package from Cloudia if deadline extension is confirmed","Bid Manager","Within 2 hours of corrigendum confirmation","Procurement documents distributed to estimator, legal reviewer, and finance"
+"Check every suitability criterion against company credentials (turnover, references, insurance)","Bid Manager","Within 24 hours of obtaining documents","Written gap analysis — escalate immediately if any criterion is not met"
+"Confirm surety bond availability (~€90,000) and obtain indicative cost","Finance Director","Within 24 hours of obtaining documents","Written confirmation from bank or insurer"
+"Model full-scope and reduced-scope (Solistinkatu south only, no Rata-aukio 2) pricing scenarios","Estimator","Within 48 hours of obtaining documents","Two priced programmes confirming commercial viability of both scenarios"
+"Obtain internal sign-off confirming no grounds for exclusion under Procurement Act (1397/2016)","Legal / Compliance","Before bid submission","Signed internal declaration of no exclusion grounds"
