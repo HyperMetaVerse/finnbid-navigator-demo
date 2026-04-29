@@ -28,6 +28,78 @@ def truncate(text: str, n: int = 12000) -> str:
         return text
     return text[:n] + "\n\n[TRUNCATED]"
 
+def generic_prompts():
+    base = """
+You are FinnBid Navigator, an AI assistant for analysing Finnish public procurement tenders.
+You must support human decision-making, not replace it.
+Do NOT invent facts. If information is missing, say "Not found" and list what to verify.
+When you extract any key requirement, include EVIDENCE: a short quote (max ~25 words) and where it appears (section heading / page if visible).
+Output must be clear business English (British spelling).
+""".strip()
+
+    p1 = base + """
+
+TASK 1 — Tender essentials table
+Extract into a table:
+
+- Buyer / contracting authority
+- Tender title
+- CPV code(s)
+- Deadline (date + time)
+- Submission portal
+- Submission language
+- Contract duration
+- Award criteria (price/quality weighting if stated)
+- Securities/guarantees
+- Mandatory certificates/documents
+- Minimum supplier requirements
+
+OUTPUT FORMAT (CSV ONLY):
+Field,Value,Evidence
+""".strip()
+
+    p2 = base + """
+
+TASK 2 — Instant disqualifiers checklist (Go/No-Go blockers)
+List ONLY hard blockers (things that would make us ineligible/non-compliant).
+
+OUTPUT FORMAT (CSV ONLY):
+Blocker,Why_it_matters,Evidence,Action,Preliminary_Go_NoGo
+""".strip()
+
+    p3 = base + """
+
+TASK 3 — Tender Readiness Dashboard (RAG scoring)
+Give Green/Yellow/Red for:
+- Eligibility fit
+- Financial friction
+- Operational effort
+- Legal/compliance risk
+- Timeline risk
+
+OUTPUT FORMAT (CSV ONLY):
+Category,RAG,Reason,Evidence,Human_Check,Overall_Status,Top_Risks,Top_Internal_Questions
+""".strip()
+
+    p4 = base + """
+
+TASK 4 — Final bid-readiness report
+Split into:
+A) EXEC_SUMMARY (plain text)
+
+B) RISKS_CSV (CSV ONLY):
+Risk,Impact,Mitigation,Evidence,Owner
+
+C) NEXT_STEPS_CSV (CSV ONLY):
+Step,Owner,When,Output
+""".strip()
+
+    return {
+        "Prompt 1 — Essentials (template)": p1,
+        "Prompt 2 — Disqualifiers (template)": p2,
+        "Prompt 3 — RAG (template)": p3,
+        "Prompt 4 — Final report (template)": p4,
+    }
 def make_prompts(tender_text: str):
     base = f"""
 You are FinnBid Navigator, an AI assistant for analysing Finnish public procurement tenders.
@@ -160,7 +232,7 @@ with col2:
     )
 
 st.divider()
-tabs = st.tabs(["Essentials", "Disqualifiers", "RAG Dashboard", "Final Report", "Prompts"])
+tabs = st.tabs(["Essentials", "Disqualifiers", "RAG Dashboard", "Final Report", "Prompts", "Code"])
 # ---- Demo mode: preload saved outputs into session state ----
 if 'demo_loaded' not in st.session_state:
     st.session_state['demo_loaded'] = False
@@ -264,10 +336,26 @@ with tabs[3]:
 
 with tabs[4]:
     st.subheader("Prompts (copy into Claude)")
+
+    st.info("Tip: If you want clean tables in this app, ask Claude to output CSV using the exact headers shown in each prompt.")
+
     if not combined_text:
-        st.warning("Upload documents first to generate prompts.")
+        st.write("No document uploaded. Here are the prompt templates:")
+        prompts = generic_prompts()
     else:
+        st.write("Document uploaded. Here are prompts pre-filled with the document text:")
         prompts = make_prompts(combined_text)
-        for title, prompt in prompts.items():
-            with st.expander(title):
-                st.code(prompt, language="markdown")
+
+    for title, prompt in prompts.items():
+        with st.expander(title):
+            st.code(prompt, language="markdown")
+
+with tabs[5]:
+    st.subheader("App code (read-only)")
+    try:
+        with open(__file__, "r", encoding="utf-8") as f:
+            code_text = f.read()
+        st.code(code_text, language="python")
+    except Exception as e:
+        st.error("Could not load app.py")
+        st.code(str(e))
