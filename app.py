@@ -3,6 +3,50 @@ from pypdf import PdfReader
 import pandas as pd
 from pathlib import Path
 
+def inject_custom_css():
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #0b1220 0%, #101b2d 45%, #0d1f2a 100%);
+        color: #eaf6ff;
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0f1726 0%, #132033 100%);
+        border-right: 1px solid rgba(95, 225, 255, 0.18);
+    }
+    h1, h2, h3 {
+        color: #f4fbff !important;
+        text-shadow: 0 0 10px rgba(95, 225, 255, 0.18);
+    }
+    div[data-baseweb="tab-list"] button {
+        background: rgba(20, 35, 55, 0.85);
+        border: 1px solid rgba(95, 225, 255, 0.25);
+        border-radius: 10px;
+        color: #bfeeff;
+        padding: 8px 14px;
+    }
+    div[data-baseweb="tab-list"] button[aria-selected="true"] {
+        background: linear-gradient(90deg, #12324a 0%, #155e75 100%);
+        color: white;
+        border: 1px solid rgba(95, 225, 255, 0.5);
+        box-shadow: 0 0 12px rgba(95, 225, 255, 0.18);
+    }
+    .stButton > button {
+        background: linear-gradient(90deg, #0e7490 0%, #06b6d4 100%);
+        color: white;
+        border: 1px solid rgba(95, 225, 255, 0.45);
+        border-radius: 10px;
+        font-weight: 600;
+    }
+    .stTextArea textarea, .stTextInput input {
+        background-color: rgba(15, 23, 38, 0.9) !important;
+        color: #eaf6ff !important;
+        border: 1px solid rgba(95, 225, 255, 0.25) !important;
+        border-radius: 10px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def load_demo_text(filename: str) -> str:
     p = Path(__file__).parent / filename
     return p.read_text(encoding="utf-8", errors="ignore") if p.exists() else ""
@@ -193,15 +237,38 @@ Rules:
     }
 
 st.set_page_config(page_title="FinnBid Navigator (Prototype)", layout="wide")
-st.title("FinnBid Navigator — Prototype")
+inject_custom_css()
+st.markdown("""
+<div style="
+    padding: 18px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(95,225,255,0.28);
+    background: linear-gradient(90deg, rgba(14,116,144,0.20) 0%, rgba(6,182,212,0.10) 100%);
+    box-shadow: 0 0 18px rgba(95,225,255,0.12);
+">
+  <div style="font-size: 38px; font-weight: 800; color: #f4fbff; letter-spacing: 0.4px;">
+    FinnBid Navigator
+  </div>
+  <div style="margin-top: 6px; font-size: 14px; color: #bfeeff;">
+    AI-assisted tender analysis • human-in-the-loop • demo-ready
+  </div>
+</div>
+""", unsafe_allow_html=True)
 st.caption("Decision-support for tender analysis (human-in-the-loop).")
 
 with st.sidebar:
     st.header("Input")
+
+    demo_choice = st.selectbox(
+        "Choose demo dataset",
+        ["Oulu (old demo)"],
+        index=0
+    )
+
     demo_mode = st.checkbox("Demo mode (load saved outputs)", value=False)
 
     if demo_mode:
-        st.success("Demo mode is ON: the app will auto-fill the outputs. Now open the tabs and click the 'Show … table' buttons.")
+        st.success(f"Demo mode is ON: Loaded demo = {demo_choice}. Open the tabs and click the 'Show … table' buttons.")
     else:
         st.info("New here? Tick 'Demo mode' to view the saved demo results. Or upload tender PDFs/TXT to generate prompts and paste Claude outputs.")
 
@@ -245,12 +312,12 @@ if 'demo_loaded' not in st.session_state:
 
 if 'demo_mode' in locals() and demo_mode and not st.session_state['demo_loaded']:
     # Preload CSV/text into the text areas used in the app
-    st.session_state["essentials_csv"] = load_demo_text("demo_essentials.csv")
-    st.session_state["disqualifiers_csv"] = load_demo_text("demo_disqualifiers.csv")
-    st.session_state["rag_csv"] = load_demo_text("demo_rag.csv")
-    st.session_state["final_report_text"] = load_demo_text("demo_report.txt")
-    st.session_state["risks_csv"] = load_demo_text("demo_risks.csv")
-    st.session_state["steps_csv"] = load_demo_text("demo_next_steps.csv")
+    st.session_state["essentials_csv"] = load_demo_text("oulu_essentials.csv")
+    st.session_state["disqualifiers_csv"] = load_demo_text("oulu_disqualifiers.csv")
+    st.session_state["rag_csv"] = load_demo_text("oulu_rag.csv")
+    st.session_state["final_report_text"] = load_demo_text("oulu_report.txt")
+    st.session_state["risks_csv"] = load_demo_text("oulu_risks.csv")
+    st.session_state["steps_csv"] = load_demo_text("oulu_next_steps.csv")
     st.session_state['demo_loaded'] = True
 
 if 'demo_mode' in locals() and (not demo_mode):
