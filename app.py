@@ -3,8 +3,10 @@ from pypdf import PdfReader
 import pandas as pd
 from pathlib import Path
 
+
 def inject_custom_css():
-    st.markdown("""
+    st.markdown(
+        """
     <style>
     .stApp {
         background: linear-gradient(135deg, #0b1220 0%, #101b2d 45%, #0d1f2a 100%);
@@ -45,17 +47,15 @@ def inject_custom_css():
         border-radius: 10px !important;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
+
 
 def load_demo_text(filename: str) -> str:
     p = Path(__file__).parent / filename
     return p.read_text(encoding="utf-8", errors="ignore") if p.exists() else ""
 
-def load_demo_df(filename: str) -> pd.DataFrame:
-    p = Path(__file__).parent / filename
-    if not p.exists():
-        return pd.DataFrame()
-    return pd.read_csv(p)
 
 def read_pdf(file) -> str:
     reader = PdfReader(file)
@@ -64,13 +64,16 @@ def read_pdf(file) -> str:
         parts.append(page.extract_text() or "")
     return "\n".join(parts).strip()
 
+
 def read_txt(file) -> str:
     return file.read().decode("utf-8", errors="ignore").strip()
+
 
 def truncate(text: str, n: int = 12000) -> str:
     if len(text) <= n:
         return text
     return text[:n] + "\n\n[TRUNCATED]"
+
 
 def generic_prompts():
     base = """
@@ -84,20 +87,6 @@ Output must be clear business English (British spelling).
     p1 = base + """
 
 TASK 1 — Tender essentials table
-Extract into a table:
-
-- Buyer / contracting authority
-- Tender title
-- CPV code(s)
-- Deadline (date + time)
-- Submission portal
-- Submission language
-- Contract duration
-- Award criteria (price/quality weighting if stated)
-- Securities/guarantees
-- Mandatory certificates/documents
-- Minimum supplier requirements
-
 OUTPUT FORMAT (CSV ONLY):
 Field,Value,Evidence
 """.strip()
@@ -105,8 +94,6 @@ Field,Value,Evidence
     p2 = base + """
 
 TASK 2 — Instant disqualifiers checklist (Go/No-Go blockers)
-List ONLY hard blockers (things that would make us ineligible/non-compliant).
-
 OUTPUT FORMAT (CSV ONLY):
 Blocker,Why_it_matters,Evidence,Action,Preliminary_Go_NoGo
 """.strip()
@@ -114,13 +101,6 @@ Blocker,Why_it_matters,Evidence,Action,Preliminary_Go_NoGo
     p3 = base + """
 
 TASK 3 — Tender Readiness Dashboard (RAG scoring)
-Give Green/Yellow/Red for:
-- Eligibility fit
-- Financial friction
-- Operational effort
-- Legal/compliance risk
-- Timeline risk
-
 OUTPUT FORMAT (CSV ONLY):
 Category,RAG,Reason,Evidence,Human_Check,Overall_Status,Top_Risks,Top_Internal_Questions
 """.strip()
@@ -144,6 +124,8 @@ Step,Owner,When,Output
         "Prompt 3 — RAG (template)": p3,
         "Prompt 4 — Final report (template)": p4,
     }
+
+
 def make_prompts(tender_text: str):
     base = f"""
 You are FinnBid Navigator, an AI assistant for analysing Finnish public procurement tenders.
@@ -162,7 +144,6 @@ Tender document text:
 
 TASK 1 — Tender essentials table
 Extract into a table:
-
 - Buyer / contracting authority
 - Tender title
 - CPV code(s)
@@ -170,27 +151,22 @@ Extract into a table:
 - Submission portal
 - Submission language
 - Contract duration
-- Award criteria (price/quality weighting if stated)
+- Award criteria
 - Securities/guarantees
 - Mandatory certificates/documents
 - Minimum supplier requirements
 
-Table columns:
-FIELD | VALUE | EVIDENCE (quote + where)
-
-If not found: VALUE="Not found", EVIDENCE="—".
+Then convert to CSV only with header:
+Field,Value,Evidence
 """.strip()
 
     p2 = base + """
 
 TASK 2 — Instant disqualifiers checklist (Go/No-Go blockers)
-List ONLY hard blockers (things that would make us ineligible/non-compliant).
+List ONLY hard blockers.
 
-Output table:
-BLOCKER | WHY IT MATTERS | EVIDENCE | ACTION (what a human should verify)
-
-End with:
-PRELIMINARY GO/NO-GO: [Go / No-Go / Needs verification] + 2–3 sentence justification.
+Then convert to CSV only with header:
+Blocker,Why_it_matters,Evidence,Action,Preliminary_Go_NoGo
 """.strip()
 
     p3 = base + """
@@ -203,30 +179,21 @@ Give Green/Yellow/Red for:
 - Legal/compliance risk
 - Timeline risk
 
-Table columns:
-CATEGORY | RAG | REASON | EVIDENCE | HUMAN CHECK
-
-Then:
-- Overall status (Green/Yellow/Red)
-- Top 3 risks
-- Top 3 internal questions before bidding
+Then convert to CSV only with header:
+Category,RAG,Reason,Evidence,Human_Check,Overall_Status,Top_Risks,Top_Internal_Questions
 """.strip()
 
     p4 = base + """
 
-TASK 4 — Final 1-page bid-readiness report (CEO-sendable)
-Headings:
-1) Executive summary (5–7 lines)
-2) Tender essentials (bullets)
-3) Go/No-Go recommendation (decision-support, human verifies)
-4) Key risks + mitigations
-5) What to verify (unknowns)
-6) Next steps
+TASK 4 — Final report outputs
+Produce:
+A) EXEC_SUMMARY (plain text)
 
-Rules:
-- No legal advice language.
-- Use cautious wording: "potential", "appears", "requires verification".
-- Include 3–6 evidence snippets inline (short quotes + where).
+B) RISKS_CSV (CSV only):
+Risk,Impact,Mitigation,Evidence,Owner
+
+C) NEXT_STEPS_CSV (CSV only):
+Step,Owner,When,Output
 """.strip()
 
     return {
@@ -236,9 +203,15 @@ Rules:
         "Prompt 4 — Final Report": p4,
     }
 
+
+# -----------------------------
+# App
+# -----------------------------
 st.set_page_config(page_title="FinnBid Navigator (Prototype)", layout="wide")
 inject_custom_css()
-st.markdown("""
+
+st.markdown(
+    """
 <div style="
     padding: 18px 18px;
     border-radius: 16px;
@@ -253,7 +226,9 @@ st.markdown("""
     AI-assisted tender analysis • human-in-the-loop • demo-ready
   </div>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 st.caption("Decision-support for tender analysis (human-in-the-loop).")
 
 with st.sidebar:
@@ -261,19 +236,26 @@ with st.sidebar:
 
     demo_choice = st.selectbox(
         "Choose demo dataset",
-        ["Oulu (old demo)"],
-        index=0
+        ["Oulu (old demo)", "Lappfjärd (26-PDF tender pack)"],
+        index=0,
     )
 
     demo_mode = st.checkbox("Demo mode (load saved outputs)", value=False)
 
     if demo_mode:
-        st.success(f"Demo mode is ON: Loaded demo = {demo_choice}. Open the tabs and click the 'Show … table' buttons.")
+        st.success(
+            f"Demo mode is ON: Loaded demo = {demo_choice}. Open the tabs and click the 'Show … table' buttons."
+        )
     else:
-        st.info("New here? Tick 'Demo mode' to view the saved demo results. Or upload tender PDFs/TXT to generate prompts and paste Claude outputs.")
+        st.info(
+            "New here? Tick 'Demo mode' to view the saved demo results. Or upload tender PDFs/TXT to generate prompts and paste Claude outputs."
+        )
 
-    files = st.file_uploader("Upload tender documents (optional)", type=["pdf", "txt"], accept_multiple_files=True)
+    files = st.file_uploader(
+        "Upload tender documents (optional)", type=["pdf", "txt"], accept_multiple_files=True
+    )
 
+# Read uploaded docs (optional)
 tender_texts = []
 if files:
     for f in files:
@@ -298,79 +280,105 @@ with col2:
     st.markdown(
         """
 1) Upload a tender PDF/TXT  
-2) Open **Prompts** tab → copy Prompt 1 into Claude → paste result into **Essentials**  
+2) Open **Prompts** tab → copy Prompt 1 into Claude → ask for **CSV headers** → paste into **Essentials**  
 3) Repeat for Disqualifiers, RAG, Final Report  
-4) Demo the same workflow on two tenders to show repeatability
+4) Use Demo mode + dropdown to show repeatability across tenders
 """
     )
 
 st.divider()
-tabs = st.tabs(["Essentials", "Disqualifiers", "RAG Dashboard", "Final Report", "Prompts", "Code"])
-# ---- Demo mode: preload saved outputs into session state ----
-if 'demo_loaded' not in st.session_state:
-    st.session_state['demo_loaded'] = False
 
-if 'demo_mode' in locals() and demo_mode and not st.session_state['demo_loaded']:
-    # Preload CSV/text into the text areas used in the app
-    st.session_state["essentials_csv"] = load_demo_text("oulu_essentials.csv")
-    st.session_state["disqualifiers_csv"] = load_demo_text("oulu_disqualifiers.csv")
-    st.session_state["rag_csv"] = load_demo_text("oulu_rag.csv")
-    st.session_state["final_report_text"] = load_demo_text("oulu_report.txt")
-    st.session_state["risks_csv"] = load_demo_text("oulu_risks.csv")
-    st.session_state["steps_csv"] = load_demo_text("oulu_next_steps.csv")
-    st.session_state['demo_loaded'] = True
+tabs = st.tabs(
+    ["Essentials", "Disqualifiers", "RAG Dashboard", "Final Report", "Prompts", "Code"]
+)
 
-if 'demo_mode' in locals() and (not demo_mode):
-    # If demo mode is turned off, allow reload next time it's turned on
-    st.session_state['demo_loaded'] = False
+# ---- Demo mode preload ----
 
-def output_box(key: str):
-    st.text_area("Paste Claude output here", key=key, height=280)
+# Reload demo outputs when the demo choice changes
+if "last_demo_choice" not in st.session_state:
+    st.session_state["last_demo_choice"] = demo_choice
 
+if st.session_state["last_demo_choice"] != demo_choice:
+    st.session_state["demo_loaded"] = False
+    st.session_state["last_demo_choice"] = demo_choice
+
+if "demo_loaded" not in st.session_state:
+    st.session_state["demo_loaded"] = False
+
+if demo_mode and (not st.session_state["demo_loaded"]):
+    prefix = "oulu"
+    if demo_choice.startswith("Lappfjärd"):
+        prefix = "lappfjard"
+
+    st.session_state["essentials_csv"] = load_demo_text(f"{prefix}_essentials.csv")
+    st.session_state["disqualifiers_csv"] = load_demo_text(f"{prefix}_disqualifiers.csv")
+    st.session_state["rag_csv"] = load_demo_text(f"{prefix}_rag.csv")
+    st.session_state["final_report_text"] = load_demo_text(f"{prefix}_report.txt")
+    st.session_state["risks_csv"] = load_demo_text(f"{prefix}_risks.csv")
+    st.session_state["steps_csv"] = load_demo_text(f"{prefix}_next_steps.csv")
+
+    st.session_state["demo_loaded"] = True
+
+if not demo_mode:
+    st.session_state["demo_loaded"] = False
+
+
+# -----------------------------
+# Tabs
+# -----------------------------
 with tabs[0]:
     st.subheader("1) Tender essentials (CSV → table)")
-
     st.write("Paste CSV from Claude (columns: Field,Value,Evidence).")
     csv_text = st.text_area("Essentials CSV", key="essentials_csv", height=220)
 
     if st.button("Show essentials table"):
         try:
-            # Read CSV from the pasted text
             from io import StringIO
+
             df = pd.read_csv(StringIO(csv_text))
             st.dataframe(df, use_container_width=True)
         except Exception as e:
-            st.error("Could not read CSV. Make sure Claude output is valid CSV with header: Field,Value,Evidence.")
+            st.error(
+                "Could not read CSV. Make sure Claude output is valid CSV with header: Field,Value,Evidence."
+            )
             st.code(str(e))
 
 with tabs[1]:
     st.subheader("2) Instant disqualifiers (CSV → table)")
-
-    st.write("Paste CSV from Claude (columns: Blocker,Why_it_matters,Evidence,Action,Preliminary_Go_NoGo).")
+    st.write(
+        "Paste CSV from Claude (columns: Blocker,Why_it_matters,Evidence,Action,Preliminary_Go_NoGo)."
+    )
     csv_text = st.text_area("Disqualifiers CSV", key="disqualifiers_csv", height=220)
 
     if st.button("Show disqualifiers table"):
         try:
             from io import StringIO
+
             df = pd.read_csv(StringIO(csv_text))
             st.dataframe(df, use_container_width=True)
         except Exception as e:
-            st.error("Could not read CSV. Make sure Claude output is valid CSV with the correct header row.")
+            st.error(
+                "Could not read CSV. Make sure Claude output is valid CSV with the correct header row."
+            )
             st.code(str(e))
 
 with tabs[2]:
     st.subheader("3) Tender Readiness Dashboard (CSV → table)")
-
-    st.write("Paste CSV from Claude (columns: Category,RAG,Reason,Evidence,Human_Check,Overall_Status,Top_Risks,Top_Internal_Questions).")
+    st.write(
+        "Paste CSV from Claude (columns: Category,RAG,Reason,Evidence,Human_Check,Overall_Status,Top_Risks,Top_Internal_Questions)."
+    )
     csv_text = st.text_area("RAG CSV", key="rag_csv", height=220)
 
     if st.button("Show RAG table"):
         try:
             from io import StringIO
+
             df = pd.read_csv(StringIO(csv_text))
             st.dataframe(df, use_container_width=True)
         except Exception as e:
-            st.error("Could not read CSV. Make sure Claude output is valid CSV with the correct header row.")
+            st.error(
+                "Could not read CSV. Make sure Claude output is valid CSV with the correct header row."
+            )
             st.code(str(e))
 
 with tabs[3]:
@@ -380,13 +388,13 @@ with tabs[3]:
     st.text_area("Final report text", key="final_report_text", height=220)
 
     st.divider()
-
-    st.write("Paste RISKS_CSV from Claude (columns: Risk,Impact,Mitigation,Evidence,Owner):")
+    st.write("Paste RISKS_CSV (columns: Risk,Impact,Mitigation,Evidence,Owner):")
     risks_csv = st.text_area("Risks CSV", key="risks_csv", height=180)
 
     if st.button("Show risks table"):
         try:
             from io import StringIO
+
             df = pd.read_csv(StringIO(risks_csv))
             st.dataframe(df, use_container_width=True)
         except Exception as e:
@@ -394,23 +402,26 @@ with tabs[3]:
             st.code(str(e))
 
     st.divider()
-
-    st.write("Paste NEXT_STEPS_CSV from Claude (columns: Step,Owner,When,Output):")
+    st.write("Paste NEXT_STEPS_CSV (columns: Step,Owner,When,Output):")
     steps_csv = st.text_area("Next steps CSV", key="steps_csv", height=180)
 
     if st.button("Show next steps table"):
         try:
             from io import StringIO
+
             df = pd.read_csv(StringIO(steps_csv))
             st.dataframe(df, use_container_width=True)
         except Exception as e:
-            st.error("Could not read Next steps CSV. Make sure it has the correct header row.")
+            st.error(
+                "Could not read Next steps CSV. Make sure it has the correct header row."
+            )
             st.code(str(e))
 
 with tabs[4]:
     st.subheader("Prompts (copy into Claude)")
-
-    st.info("Tip: If you want clean tables in this app, ask Claude to output CSV using the exact headers shown in each prompt.")
+    st.info(
+        "Tip: Ask Claude to output CSV using the exact headers shown in each prompt so tables display cleanly."
+    )
 
     if not combined_text:
         st.write("No document uploaded. Here are the prompt templates:")
