@@ -199,6 +199,12 @@ st.caption("Decision-support for tender analysis (human-in-the-loop).")
 with st.sidebar:
     st.header("Input")
     demo_mode = st.checkbox("Demo mode (load saved outputs)", value=False)
+
+    if demo_mode:
+        st.success("Demo mode is ON: the app will auto-fill the outputs. Now open the tabs and click the 'Show … table' buttons.")
+    else:
+        st.info("New here? Tick 'Demo mode' to view the saved demo results. Or upload tender PDFs/TXT to generate prompts and paste Claude outputs.")
+
     files = st.file_uploader("Upload tender documents (optional)", type=["pdf", "txt"], accept_multiple_files=True)
 
 tender_texts = []
